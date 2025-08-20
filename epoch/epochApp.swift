@@ -8,10 +8,33 @@
 import SwiftUI
 
 @main
-struct epochApp: App {
+struct TimestampConverterApp: App {
+    @StateObject private var clipboardChecker = ClipboardChecker()
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        MenuBarExtra("⏱", systemImage: "clock") {
+            VStack {
+                if let converted = clipboardChecker.convertedTime {
+                    Text("Clipboard Time:")
+                        .font(.headline)
+                    Text(converted)
+                        .font(.title3)
+                        .padding()
+                } else {
+                    Text("No valid timestamp in clipboard")
+                        .padding()
+                }
+
+                Button("Refresh") {
+                    clipboardChecker.checkClipboard()
+                }
+                Divider()
+                Button("Quit") {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
+            .padding()
+            .frame(width: 200)
         }
     }
 }

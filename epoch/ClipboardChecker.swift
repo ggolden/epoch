@@ -1,0 +1,37 @@
+//
+//  ClipboardChecker.swift
+//  epoch
+//
+//  Created by Glenn Golden on 8/19/25.
+//
+
+import Foundation
+import AppKit
+
+class ClipboardChecker: ObservableObject {
+    @Published var convertedTime: String?
+
+    init() {
+        checkClipboard()
+    }
+
+    func checkClipboard() {
+        let pasteboard = NSPasteboard.general
+        if let content = pasteboard.string(forType: .string),
+           let timestamp = Double(content.trimmingCharacters(in: .whitespacesAndNewlines)) {
+
+            // If it's in seconds, convert; if milliseconds, scale down
+            let adjusted = timestamp > 1_000_000_000_000 ? timestamp / 1000 : timestamp
+
+            let date = Date(timeIntervalSince1970: adjusted)
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .medium
+            formatter.timeZone = .current
+
+            convertedTime = formatter.string(from: date)
+        } else {
+            convertedTime = nil
+        }
+    }
+}
