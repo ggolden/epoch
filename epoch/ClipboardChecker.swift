@@ -11,8 +11,27 @@ import AppKit
 class ClipboardChecker: ObservableObject {
     @Published var convertedTime: String?
 
+    private var lastChangeCount: Int
+    private var timer: Timer?
+
     init() {
+        let pasteboard = NSPasteboard.general
+        lastChangeCount = pasteboard.changeCount
+
         checkClipboard()
+
+        // Start polling every 1 second
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.checkForChanges()
+        }
+    }
+
+    private func checkForChanges() {
+        let pasteboard = NSPasteboard.general
+        if pasteboard.changeCount != lastChangeCount {
+            lastChangeCount = pasteboard.changeCount
+            checkClipboard()
+        }
     }
 
     func checkClipboard() {
@@ -20,7 +39,7 @@ class ClipboardChecker: ObservableObject {
         if let content = pasteboard.string(forType: .string),
            let timestamp = Double(content.trimmingCharacters(in: .whitespacesAndNewlines)) {
 
-            // If it's in seconds, convert; if milliseconds, scale down
+            // If it's in seconds, use directly; if in ms, scale down
             let adjusted = timestamp > 1_000_000_000_000 ? timestamp / 1000 : timestamp
 
             let date = Date(timeIntervalSince1970: adjusted)
@@ -29,9 +48,17 @@ class ClipboardChecker: ObservableObject {
             formatter.timeStyle = .medium
             formatter.timeZone = .current
 
-            convertedTime = formatter.string(from: date)
+            DispatchQueue.main.async {
+                self.convertedTime = formatter.string(from: date)
+            }
         } else {
-            convertedTime = nil
+            DispatchQueue.main.async {
+                self.convertedTime = nil
+            }
         }
+    }
+
+    deinit {
+        timer?.invalidate()
     }
 }
