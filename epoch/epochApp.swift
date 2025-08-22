@@ -6,15 +6,16 @@
 //
 
 import SwiftUI
+import Combine
 
 @main
 struct EpochApp: App {
     @StateObject private var clipboardChecker = ClipboardChecker()
 
-    let timer = Timer.publish(every: 1.0, on: .main, in: .common)
-
     var body: some Scene {
-        MenuBarExtra("⏱", systemImage: "clock") {
+        MenuBarExtra (
+            clipboardChecker.convertedTime == nil ? "🕰️😳" : "🕰️✅"
+        ) {
             VStack {
                 if let converted = clipboardChecker.convertedTime {
                     Text("Clipboard Time:")
@@ -37,10 +38,6 @@ struct EpochApp: App {
             }
             .padding()
             .frame(width: 200)
-            
-            .onReceive(timer) { _ in
-                clipboardChecker.checkClipboard()
-            }
         }
     }
 }

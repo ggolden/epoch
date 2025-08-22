@@ -7,9 +7,23 @@
 
 import Foundation
 import AppKit
+import Combine
 
 class ClipboardChecker: ObservableObject {
     @Published var convertedTime: String?
+
+    private var cancellable: AnyCancellable?
+    
+    init() {
+        cancellable = Timer
+            .publish(every: 1.0, on: .main, in: .common)
+            .autoconnect()
+            .sink{ [weak self] _ in
+                self?.checkClipboard()
+            }
+        
+        checkClipboard()
+    }
 
     func checkClipboard() {
         let pasteboard = NSPasteboard.general
@@ -30,5 +44,9 @@ class ClipboardChecker: ObservableObject {
         } else {
             convertedTime = nil
         }
+    }
+    
+    deinit {
+        cancellable?.cancel()
     }
 }
